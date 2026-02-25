@@ -1,6 +1,7 @@
 package com.ECommerce.Entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class Product {
     private String name;
     private String description;
     private double price;
+    private String imageUrl;
     private int quantity;
     @OneToMany(mappedBy = "product")
     @JsonIgnore
@@ -29,4 +31,9 @@ public class Product {
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @ManyToOne
+    @JsonIgnore
+    @JoinColumn(name = "category_id")
+    private Category category;
 }
