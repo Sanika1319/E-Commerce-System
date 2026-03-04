@@ -18,10 +18,15 @@ import java.util.List;
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long cartId;
+    private int quantity;
+    private double totalAmount;
+
     @OneToOne
     private User user;
-    @OneToMany(mappedBy = "cart")
+    @OneToMany(mappedBy = "cart",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     @JsonIgnore
-    private List<CartItem > cartItems = new ArrayList<>();
+    private List<CartItem> cartItems = new ArrayList<>();
 }

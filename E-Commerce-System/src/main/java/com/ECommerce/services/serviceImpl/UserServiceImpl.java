@@ -28,10 +28,17 @@ public class UserServiceImpl implements UserService {
     public User saveUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.USER);
+        User saved = userRepository.save(user);
+
+//         creating new cart for every user
         Cart cart = new Cart();
-        user.setCart(cart);
-        cartRepository.save(cart);
-        return userRepository.save(user);
+        cart.setUser(saved);
+        cart.setQuantity(0);
+        cart.setTotalAmount(0);
+        Cart cart1 = cartRepository.save(cart);
+
+        saved.setCart(cart1);
+        return saved;
     }
 
     @Override
