@@ -1,6 +1,7 @@
 package com.ECommerce.Entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,11 +23,13 @@ public class Orders {
     private Long id;
 
     @ManyToOne
+    @JsonManagedReference
     private User user;
 
     private LocalDate date;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Status status;
 
     private double totalAmount;
@@ -34,4 +37,8 @@ public class Orders {
     @OneToMany(mappedBy = "orders")
     @JsonIgnore
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @OneToOne(mappedBy = "orders", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Payment payment;
 }

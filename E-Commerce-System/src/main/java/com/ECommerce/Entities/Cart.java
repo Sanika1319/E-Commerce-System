@@ -1,6 +1,7 @@
 package com.ECommerce.Entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,10 +24,15 @@ public class Cart {
     private double totalAmount;
 
     @OneToOne
+    @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"cart", "orders"})
     private User user;
-    @OneToMany(mappedBy = "cart",
+
+    @OneToMany(
+            mappedBy = "cart",
             cascade = CascadeType.ALL,
-            orphanRemoval = true)
-    @JsonIgnore
+            orphanRemoval = true
+    )
+    @JsonIgnoreProperties("cart")   // 🔥 Prevent loop
     private List<CartItem> cartItems = new ArrayList<>();
 }

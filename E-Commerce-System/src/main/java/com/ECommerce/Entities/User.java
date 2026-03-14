@@ -1,5 +1,6 @@
 package com.ECommerce.Entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,11 +30,15 @@ public class User {
     private Role role;
     private LocalDateTime createdAt;
     @OneToMany(mappedBy = "user")
-    @JsonIgnore
-    private List<Orders> orders = new ArrayList<>();
+    @JsonBackReference
+    private List<Orders> orders;
     @OneToOne(mappedBy = "user")
     @JsonIgnore
     private Cart cart;
+
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    private WishList wishList;
     @PrePersist
     protected void setCreatedAt(){
         this.createdAt = LocalDateTime.now();

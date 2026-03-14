@@ -36,4 +36,8 @@ public class Product {
     @JsonIgnore
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne
+    @JsonIgnore
+    private WishList wishList;
 }

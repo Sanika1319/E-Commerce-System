@@ -16,4 +16,6 @@ public interface ProductService {
     List<Product> getLowStockProducts();
 
     List<Product> getOutOfStockProducts();
+
+    void deleteProduct(Long id);
 }

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -42,5 +43,5 @@ public class Category {
     }
 
     @OneToMany(mappedBy = "category")
-    private List<Product> products;
+    private List<Product> list = new ArrayList<>();
 }

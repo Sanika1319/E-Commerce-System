@@ -6,20 +6,24 @@ import com.ECommerce.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/product")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/createProduct/{categoryId}")
     public ResponseEntity<Product> createProduct(@PathVariable Long categoryId,@RequestBody Product product){
       return new ResponseEntity<>(productService.createProduct(categoryId,product), HttpStatus.CREATED);
     }
+
 
     @GetMapping("/getProductById/{productId}")
     public ResponseEntity<Product> getProductById(@PathVariable Long productId){
@@ -31,6 +35,7 @@ public class ProductController {
         return new ResponseEntity<>(productService.getAllProducts(),HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/updateProduct/{productId}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long productId, @RequestBody Product updatedProduct){
       return new ResponseEntity<>(productService.updateProduct(productId,updatedProduct),HttpStatus.OK);
@@ -57,6 +62,14 @@ public class ProductController {
     @GetMapping("/getOutOfStockProducts")
     public ResponseEntity<List<Product>>getOutOfStockProducts(){
         return new ResponseEntity<>(productService.getOutOfStockProducts(),HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id){
+        System.out.println("INSIDE DELETE...............................................");
+        productService.deleteProduct(id);
+        return new ResponseEntity<>("Product deleted successfully ",HttpStatus.OK);
     }
 
 }

@@ -76,4 +76,11 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getOutOfStockProducts() {
         return productRepository.findByQuantity(0);
     }
+
+    @Override
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+        productRepository.delete(product);
+
+    }
 }

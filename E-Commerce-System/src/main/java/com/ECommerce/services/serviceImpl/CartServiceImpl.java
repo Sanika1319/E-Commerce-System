@@ -36,8 +36,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart addProductToCart(Long userId, Long productId, int quantity) {
-        if (quantity <= 0) {
-            throw new RuntimeException("Quantity must be greater than zero");
+        if (quantity == 0) {
+            throw new RuntimeException("Quantity cannot be zero");
         }
 
         User user = userRepository.findById(userId)
@@ -48,6 +48,7 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = cartRepository.findByUser(user);
 
+        // Create cart if not exists
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
@@ -61,17 +62,35 @@ public class CartServiceImpl implements CartService {
                 .orElse(null);
 
         if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+
+            int newQuantity = cartItem.getQuantity() + quantity;
+
+            // If quantity becomes zero or less → remove item
+            if (newQuantity <= 0) {
+                cart.getCartItems().remove(cartItem);
+                cartItemRepository.delete(cartItem);
+            } else {
+                cartItem.setQuantity(newQuantity);
+            }
+
         } else {
+
+            // Only allow positive quantity when creating new item
+            if (quantity < 0) {
+                throw new RuntimeException("Cannot reduce quantity. Item not in cart.");
+            }
+
             cartItem = new CartItem();
             cartItem.setCart(cart);
             cartItem.setProduct(product);
             cartItem.setQuantity(quantity);
-            cartItem.setPrice(product.getPrice()); // store unit price
+            cartItem.setPrice(product.getPrice()); // Store unit price
+
             cartItemRepository.save(cartItem);
             cart.getCartItems().add(cartItem);
         }
 
+        // Recalculate totals correctly
         recalculateCart(cart);
 
         return cartRepository.save(cart);

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/cart")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class CartController {
     @Autowired
     private CartService cartService;

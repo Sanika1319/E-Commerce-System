@@ -1,5 +1,6 @@
 package com.ECommerce.Entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,10 +15,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class PaymentOrder {
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "order_id")
+    @JsonBackReference
+    private Orders orders;
 
     private String razorpayOrderId;
     private String razorpayPaymentId;
@@ -28,12 +34,12 @@ public class PaymentOrder {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-
     private LocalDateTime createdAt;
 
-    @ManyToOne
-    private User user;
 
-    @OneToOne
-    private Orders orders;
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+    }
+
 }

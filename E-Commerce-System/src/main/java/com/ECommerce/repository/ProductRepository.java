@@ -1,5 +1,6 @@
 package com.ECommerce.repository;
 
+import com.ECommerce.Entities.Category;
 import com.ECommerce.Entities.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -19,4 +20,6 @@ public interface ProductRepository extends JpaRepository<Product,Long> {
     List<Product> findByQuantityLessThan(int quantity);
 
     List<Product> findByQuantity(int quantity);
+
+    List<Product> findByCategory(Category category);
 }
