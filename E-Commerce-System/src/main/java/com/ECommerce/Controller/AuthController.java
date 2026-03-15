@@ -31,7 +31,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> saveUser(@RequestBody User user){
+        System.out.println(user+" before");
         User savedUser = userService.saveUser(user);
+        System.out.println(user+" after");
         return  ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
 
     }
