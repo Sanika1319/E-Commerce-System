@@ -19,29 +19,11 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @PostMapping("/createOrder/{userId}")
-    public ResponseEntity<?> createOrder(@PathVariable Long userId) throws Exception {
-
-        Map<String, Object> response = orderService.createOrder(userId);
-        return ResponseEntity.ok(response);
+    @PostMapping("placeOrder/{userId}")
+    public ResponseEntity<Orders> placeOrder(@PathVariable Long userId){
+        return new ResponseEntity<>(orderService.placeOrder(userId), HttpStatus.CREATED);
     }
 
-
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyPayment(@RequestParam Long orderId,
-                                           @RequestParam String razorpayPaymentId,
-                                           @RequestParam String razorpayOrderId,
-                                           @RequestParam String razorpaySignature) {
-
-        String result = orderService.verifyPayment(
-                orderId,
-                razorpayPaymentId,
-                razorpayOrderId,
-                razorpaySignature
-        );
-
-        return ResponseEntity.ok(result);
-    }
     @GetMapping("/{orderId}")
     public ResponseEntity<Orders> getByOrderId(@PathVariable Long orderId)
     {
@@ -62,17 +44,28 @@ public class OrderController {
         return new ResponseEntity<>(orderService.getAllOrders(),HttpStatus.OK    );
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/update/{orderId}")
-    public ResponseEntity<Orders> updateStatus(@PathVariable Long orderId, @RequestParam Status status){
-        return new ResponseEntity<>(orderService.updateOrderStatus(orderId,status),HttpStatus.OK);
+    @GetMapping("/getPlacedOrders")
+    public ResponseEntity<List<Orders>> getPlacedOrders(){
+        return new ResponseEntity<>(orderService.getPlacedOrders(),HttpStatus.OK);
+    }
+    @GetMapping("/getOnTheWayOrders")
+    public ResponseEntity<List<Orders>> getOnTheWayOrders(){
+        return new ResponseEntity<>(orderService.getOnTheWayOrders(),HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{orderId}")
-    public ResponseEntity<?> deleteOrder(@PathVariable Long orderId){
-        orderService.deleteOrder(orderId);
-        return new ResponseEntity<>("Order deleted successfully", HttpStatus.OK);
+    @GetMapping("/getDeliveredOrders")
+    public ResponseEntity<List<Orders>> getDeliveredOrders(){
+        return new ResponseEntity<>(orderService.getDeliveredOrders(),HttpStatus.OK);
+    }
+    @GetMapping("/getCancelledOrders")
+    public ResponseEntity<List<Orders>> getCancelledOrders(){
+        return new ResponseEntity<>(orderService.getCancelledOrders(),HttpStatus.OK);
+    }
+
+    @DeleteMapping("/cancelOrder/{orderId}")
+    public ResponseEntity<?>  cancelOrder(@PathVariable Long orderId){
+        orderService.cancelOrder(orderId);
+        return ResponseEntity.ok("Order Canceled Successfully");
     }
 
 

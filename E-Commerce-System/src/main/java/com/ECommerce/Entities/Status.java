@@ -1,11 +1,13 @@
 package com.ECommerce.Entities;
 
 public enum Status {
-    PLACED, SHIPPED, DELIVERED, CANCELLED,CONFIRMED,
+    PLACED,
+    ON_THE_WAY,
+    DELIVERED,
+    CANCELLED,
 
     CREATED,
     PAID,
-    FAILED,
-    REFUNDED
+    FAILED
 
 }

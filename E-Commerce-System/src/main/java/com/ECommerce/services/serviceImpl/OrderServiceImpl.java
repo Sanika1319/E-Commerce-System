@@ -4,7 +4,6 @@ import com.ECommerce.Entities.*;
 
 import com.ECommerce.repository.*;
 import com.ECommerce.services.OrderService;
-import com.ECommerce.services.RazorpayService;
 import com.razorpay.RazorpayException;
 import jakarta.transaction.Transactional;
 import org.json.JSONObject;
@@ -22,6 +21,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrdersRepository ordersRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
     @Autowired
     private OrderItemRepository orderItemRepository;
     @Autowired
@@ -31,98 +33,47 @@ public class OrderServiceImpl implements OrderService {
     private CartItemRepository cartItemRepository;
 
     @Autowired
-    private RazorpayService razorpayService;
+    private AddressRepository addressRepository;
+
+//    @Autowired
+//    private RazorpayService razorpayService;
 
     @Autowired
     private PaymentRepository paymentRepository;
 
-//        @Override
-//        public Orders createOrder(Long userId) {
-//            User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-//            Cart cart = user.getCart();
-//
-//            Orders order = new Orders();
-//            order.setDate(LocalDate.now());
-//            order.setUser(user);
-//            order.setStatus(Status.PLACED);
-//
-//            Orders savedOrder = ordersRepository.save(order);
-//
-//            double totalAmount = 0;
-//            for(CartItem ci : cart.getCartItems()){
-//                OrderItem oi = new OrderItem();
-//                oi.setOrders(savedOrder);
-//                oi.setProduct(ci.getProduct());
-//                oi.setQuantity(ci.getQuantity());
-//
-//                double price = ci.getProduct().getPrice();
-//                totalAmount += price * ci.getQuantity();
-//                orderItemRepository.save(oi);
-//            }
-//            savedOrder.setTotalAmount(totalAmount);
-//            ordersRepository.save(savedOrder);
-//
-//            cartItemRepository.deleteAll(cart.getCartItems());
-//
-//            return savedOrder;
-//        }
 
     @Override
-    @Transactional
-    public Map<String, Object> createOrder(Long userId) throws RazorpayException {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Cart cart = user.getCart();
-
-        if (cart.getCartItems().isEmpty()) {
+    public Orders placeOrder(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found : " + userId));
+        Cart cart = cartRepository.findByUser(user);
+        if (cart == null || cart.getQuantity()== 0){
             throw new RuntimeException("Cart is empty");
         }
 
+
+//        /create order
+
         Orders order = new Orders();
-        order.setDate(LocalDate.now());
         order.setUser(user);
+        order.setTotalAmount(cart.getTotalAmount());
+        order.setDate(LocalDate.now());
         order.setStatus(Status.PLACED);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setStatusUpdatedAt(LocalDateTime.now());
+        Orders savedOrders = ordersRepository.save(order);
 
-        Orders savedOrder = ordersRepository.save(order);
+        //  Clear cart after order
+        cart.getCartItems().clear();
+        cart.setQuantity(0);
+        cart.setTotalAmount(0);
+        cartRepository.save(cart);
 
-        double totalAmount = 0;
+        // 🔥 DELETE requires transaction
+        cartItemRepository.deleteByCart(cart);
 
-        for (CartItem ci : cart.getCartItems()) {
-            OrderItem oi = new OrderItem();
-            oi.setOrders(savedOrder);
-            oi.setProduct(ci.getProduct());
-            oi.setQuantity(ci.getQuantity());
-
-            totalAmount += ci.getProduct().getPrice() * ci.getQuantity();
-            orderItemRepository.save(oi);
-        }
-
-        savedOrder.setTotalAmount(totalAmount);
-        ordersRepository.save(savedOrder);
-
-        // 🔥 Create Razorpay order
-        JSONObject razorpayOrder = razorpayService.createRazorpayOrder(totalAmount);
-
-        // 🔥 Save payment entity
-        Payment payment = new Payment();
-        payment.setOrders(savedOrder);
-        payment.setRazorpayOrderId(razorpayOrder.getString("id"));
-        payment.setAmount(totalAmount);
-        payment.setStatus(Status.CREATED);
-
-        paymentRepository.save(payment);
-
-        // 🔥 Return Map instead of JSONObject
-        Map<String, Object> response = new HashMap<>();
-        response.put("orderId", savedOrder.getId());
-        response.put("razorpayOrderId", razorpayOrder.getString("id"));
-        response.put("amount", totalAmount);
-        response.put("key", razorpayService.getKeyId());
-
-        return response;
+        return savedOrders;
     }
+
     @Override
     public Orders getOrderById(Long orderId) {
         return ordersRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found with id: "+orderId));
@@ -138,60 +89,42 @@ public class OrderServiceImpl implements OrderService {
         return ordersRepository.findAll();
     }
 
+
+
     @Override
-    public Orders updateOrderStatus(Long orderId, Status status) {
-        Orders order = ordersRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        order.setStatus(status);
-        return ordersRepository.save(order);
+    public List<Orders> getPlacedOrders() {
+        return ordersRepository.findByStatus(Status.PLACED);
     }
 
     @Override
-    public void deleteOrder(Long orderId) {
-        Orders orders = ordersRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found with id"));
-        ordersRepository.delete(orders);
+    public List<Orders> getOnTheWayOrders() {
+        return ordersRepository.findByStatus(Status.ON_THE_WAY);
     }
-    @Transactional
-    public String verifyPayment(Long orderId,
-                                String razorpayPaymentId,
-                                String razorpayOrderId,
-                                String razorpaySignature) {
 
-        Orders order = ordersRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+    @Override
+    public List<Orders> getDeliveredOrders() {
+        return ordersRepository.findByStatus(Status.DELIVERED);
+    }
 
-        Payment payment = paymentRepository
-                .findByRazorpayOrderId(razorpayOrderId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+    @Override
+    public List<Orders> getCancelledOrders() {
+        return ordersRepository.findByStatus(Status.CANCELLED);
+    }
 
-        boolean isValid = razorpayService.verifySignature(
-                razorpayPaymentId,
-                razorpayOrderId,
-                razorpaySignature
-        );
+    @Override
+    public void cancelOrder(Long orderId) {
+        Orders orders = ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order Not Found: " + orderId));
 
-        if (isValid) {
-
-            payment.setRazorpayPaymentId(razorpayPaymentId);
-            payment.setRazorpaySignature(razorpaySignature);
-            payment.setStatus(Status.PAID);
-
-            order.setStatus(Status.CONFIRMED);
-
-            paymentRepository.save(payment);
-            ordersRepository.save(order);
-
-            // 🔥 CLEAR CART ONLY AFTER SUCCESS
-            Cart cart = order.getUser().getCart();
-            cartItemRepository.deleteAll(cart.getCartItems());
-
-            return "Payment Successful";
-
-        } else {
-
-            payment.setStatus(Status.FAILED);
-            paymentRepository.save(payment);
-
-            return "Payment Failed";
+        if (orders.getStatus() == Status.CANCELLED ||
+                orders.getStatus() == Status.DELIVERED) {
+            throw new RuntimeException("Delivered or cancelled order cannot be cancelled");
         }
+
+        orders.setStatus(Status.CANCELLED);
+        orders.setStatusUpdatedAt(LocalDateTime.now());
+        ordersRepository.save(orders);
     }
+
+
 }

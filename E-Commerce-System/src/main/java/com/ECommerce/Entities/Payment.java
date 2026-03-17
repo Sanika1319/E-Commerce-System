@@ -16,14 +16,35 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 
 public class Payment {
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private Long id;
+//
+//    @OneToOne
+//    @JoinColumn(name = "order_id")
+//    @JsonBackReference
+//    private Orders orders;
+//
+//    private String razorpayOrderId;
+//    private String razorpayPaymentId;
+//    private String razorpaySignature;
+//
+//    private double amount;
+//
+//    @Enumerated(EnumType.STRING)
+//    private Status status;
+//
+//    private LocalDateTime createdAt;
+//
+//
+//    @PrePersist
+//    public void prePersist() {
+//        createdAt = LocalDateTime.now();
+//    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @OneToOne
-    @JoinColumn(name = "order_id")
-    @JsonBackReference
-    private Orders orders;
 
     private String razorpayOrderId;
     private String razorpayPaymentId;
@@ -34,12 +55,19 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+
     private LocalDateTime createdAt;
 
+    @ManyToOne
+    private User user;
+
+    @OneToOne
+    @JoinColumn(name = "order_id")
+    @JsonBackReference
+    private Orders orders;
 
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
     }
-
 }

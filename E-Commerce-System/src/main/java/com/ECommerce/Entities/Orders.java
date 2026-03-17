@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +26,10 @@ public class Orders {
     @ManyToOne
     @JsonManagedReference
     private User user;
+
+    private LocalDateTime  createdAt;
+    @Column(nullable = false)
+    private LocalDateTime statusUpdatedAt;
 
     private LocalDate date;
 
