@@ -24,6 +24,7 @@ public class User {
     @Column(unique = true)
     private String email;
     private String password;
+    private String status = "ACTIVE";
     @Enumerated(EnumType.STRING)
     private Role role;
     private LocalDateTime createdAt;

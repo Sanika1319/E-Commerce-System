@@ -7,6 +7,8 @@ import java.util.List;
 public interface UserService {
     //    Registration
     User saveUser(User user);
+    User deactivateUser(Long userId);
+    User activateUser(Long userId);
 
     List<User> getAllUsers();
 

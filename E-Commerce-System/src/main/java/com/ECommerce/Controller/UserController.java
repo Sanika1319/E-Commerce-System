@@ -25,35 +25,48 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/getAllUsers")
-    public ResponseEntity<List<User>> getAllUsers(){
+    public ResponseEntity<List<User>> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }
 
     @GetMapping("/getUserById/{userId}")
-    public ResponseEntity<User> getUserById(@PathVariable Long userId){
-        return new ResponseEntity<>(userService.getUserById(userId),HttpStatus.OK);
+    public ResponseEntity<User> getUserById(@PathVariable Long userId) {
+        return new ResponseEntity<>(userService.getUserById(userId), HttpStatus.OK);
     }
 
     @GetMapping("/getUserByEmail")
-    public ResponseEntity<User> getUserByEmail(@RequestParam String email){
-        return new ResponseEntity<>(userService.getUserByEmail(email),HttpStatus.OK);
+    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
+        return new ResponseEntity<>(userService.getUserByEmail(email), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/deleteUser/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId){
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
-        return  ResponseEntity.ok("user deleted successfully");
+        return ResponseEntity.ok("user deleted successfully");
     }
 
     @GetMapping("/currentUser")
-    public ResponseEntity<?> getCurrentlyLoggedInUser(Authentication authentication){
-        if(authentication == null){
+    public ResponseEntity<?> getCurrentlyLoggedInUser(Authentication authentication) {
+        if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         }
         String email = authentication.getName();
-        User user =userRepository.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("Invalid email, user not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Invalid email, user not found"));
         return ResponseEntity.ok(user);
 
+    }
+
+
+    @PutMapping("/deactivateUser/{userId}")
+    public ResponseEntity<User> deactivateUser(@PathVariable Long userId) {
+        return new
+                ResponseEntity<>(userService.deactivateUser(userId), HttpStatus.OK);
+    }
+
+    @PutMapping("/activateUser/{userId}")
+    public ResponseEntity<User> activateUser(@PathVariable Long userId) {
+        return new
+                ResponseEntity<>(userService.activateUser(userId), HttpStatus.OK);
     }
 }
