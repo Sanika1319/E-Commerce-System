@@ -4,7 +4,10 @@ import com.ECommerce.Entities.*;
 
 import com.ECommerce.repository.*;
 import com.ECommerce.services.OrderService;
+import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
+import com.razorpay.Refund;
+import com.ECommerce.Entities.Payment;
 import jakarta.transaction.Transactional;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +40,9 @@ public class OrderServiceImpl implements OrderService {
 
 //    @Autowired
 //    private RazorpayService razorpayService;
+
+    @Autowired
+    private  PaymentService paymentService;
 
     @Autowired
     private PaymentRepository paymentRepository;
@@ -121,8 +127,40 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Delivered or cancelled order cannot be cancelled");
         }
 
+        // ✅ FIXED: correct variable
+        Payment payment = orders.getPayment();
+
+        try {
+            if (payment != null && payment.getStatus() == Status.PAID) {
+
+                RazorpayClient razorpay = paymentService.getClient();
+
+                JSONObject refundRequest = new JSONObject();
+
+                int amountInPaise = (int) (payment.getAmount() * 100);
+                refundRequest.put("amount", amountInPaise);
+
+                Refund refund = razorpay.payments.refund(
+                        payment.getRazorpayPaymentId(),
+                        refundRequest
+                );
+
+                // ✅ Update payment
+                payment.setStatus(Status.REFUNDED);
+                payment.setRazorpayRefundId(refund.get("id").toString());
+
+                paymentRepository.save(payment);
+
+                System.out.println("Refund Response: " + refund.toString());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Refund failed: " + e.getMessage());
+        }
+
         orders.setStatus(Status.CANCELLED);
         orders.setStatusUpdatedAt(LocalDateTime.now());
+
         ordersRepository.save(orders);
     }
 

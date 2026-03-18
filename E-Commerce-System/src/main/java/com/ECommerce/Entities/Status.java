@@ -8,6 +8,7 @@ public enum Status {
 
     CREATED,
     PAID,
-    FAILED
+    FAILED,
+    REFUNDED
 
 }

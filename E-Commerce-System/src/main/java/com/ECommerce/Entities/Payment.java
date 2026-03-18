@@ -49,7 +49,7 @@ public class Payment {
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private String razorpaySignature;
-
+    private String razorpayRefundId;
     private double amount;
 
     @Enumerated(EnumType.STRING)

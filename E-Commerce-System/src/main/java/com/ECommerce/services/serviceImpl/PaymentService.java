@@ -31,8 +31,7 @@ public class PaymentService {
     @Autowired
     private CartRepository cartRepository;
 
-    @Autowired
-    private OrderService ordersService;
+
 
     @Autowired
     private UserRepository userRepository;
@@ -73,25 +72,28 @@ public class PaymentService {
     // VERIFY PAYMENT & PLACE ORDER
 
 
-    public void verifyAndPlaceOrder(Long userId, Map<String, String> payload) {
 
+    public RazorpayClient getClient() {
+        try {
+            return new RazorpayClient(razorpayKey, razorpaySecret);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create Razorpay client");
+        }
+    }
+
+    public void verifyPaymentAndSave(Orders order, Map<String, String> payload) {
         try {
             JSONObject data = new JSONObject();
             data.put("razorpay_order_id", payload.get("razorpay_order_id"));
             data.put("razorpay_payment_id", payload.get("razorpay_payment_id"));
             data.put("razorpay_signature", payload.get("razorpay_signature"));
 
-            boolean isValid =
-                    Utils.verifyPaymentSignature(data, razorpaySecret);
+            boolean isValid = Utils.verifyPaymentSignature(data, razorpaySecret);
 
             if (!isValid) {
                 throw new RuntimeException("Invalid payment signature");
             }
 
-            // 1️⃣ Place business order
-            Orders order = ordersService.placeOrder(userId);
-
-            // 2️⃣ Save payment info
             Payment payment = new Payment();
             payment.setRazorpayOrderId(payload.get("razorpay_order_id"));
             payment.setRazorpayPaymentId(payload.get("razorpay_payment_id"));
@@ -105,9 +107,7 @@ public class PaymentService {
             paymentRepository.save(payment);
 
         } catch (Exception e) {
-            throw new RuntimeException("Payment verification failed");
+            throw new RuntimeException("Payment verification failed: " + e.getMessage());
         }
-
-
     }
 }
